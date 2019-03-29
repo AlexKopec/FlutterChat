@@ -25,13 +25,16 @@ class ChatScreen extends StatefulWidget {
   State createState() => new ChatScreenState();
 }
 
-class ChatScreenState extends State<ChatScreen>
-    with TickerProviderStateMixin {
+class ChatScreenState extends State<ChatScreen> with TickerProviderStateMixin {
   final List<ChatMessage> _messages = <ChatMessage>[];
   final TextEditingController _textEditingController = new TextEditingController();
+  bool _isComposing = false;
 
   void _handleSubmitted(String text) {
     _textEditingController.clear();
+    setState(() {
+      _isComposing = false;
+    });
     ChatMessage message = new ChatMessage(
       text: text,
       animationController: new AnimationController(
@@ -63,6 +66,11 @@ class ChatScreenState extends State<ChatScreen>
               child: new TextField(
                 controller: _textEditingController,
                 onSubmitted: _handleSubmitted,
+                onChanged: (String text) {
+                  setState(() {
+                    _isComposing = text.length > 0;
+                  });
+                },
                 decoration: new InputDecoration.collapsed(
                     hintText: "Send a message"),
               ),
@@ -71,8 +79,9 @@ class ChatScreenState extends State<ChatScreen>
               margin: new EdgeInsets.symmetric(horizontal: 4.0),
               child: new IconButton(
                   icon: new Icon(Icons.send),
-                  onPressed: () =>
-                      _handleSubmitted(_textEditingController.text)),
+                  onPressed: _isComposing ? () =>
+                      _handleSubmitted(_textEditingController.text) : null,
+              ),
             ),
           ],
         ),
@@ -121,7 +130,7 @@ class ChatMessage extends StatelessWidget {
     return new SizeTransition(
       sizeFactor: new CurvedAnimation(
           parent: animationController,
-          curve: Curves.easeOut
+          curve: Curves.linear
       ),
       axisAlignment: 0.0,
       child: new Container(
@@ -133,18 +142,20 @@ class ChatMessage extends StatelessWidget {
               margin: const EdgeInsets.only(right: 16.0),
               child: new CircleAvatar(child: new Text(_name[0])),
             ),
-            new Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                new Text(_name, style: Theme
-                    .of(context)
-                    .textTheme
-                    .subhead),
-                new Container(
-                  margin: const EdgeInsets.only(top: 5.0),
-                  child: new Text(text),
-                ),
-              ],
+            Expanded(
+              child: new Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  new Text(_name, style: Theme
+                      .of(context)
+                      .textTheme
+                      .subhead),
+                  new Container(
+                    margin: const EdgeInsets.only(top: 5.0),
+                    child: new Text(text),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
